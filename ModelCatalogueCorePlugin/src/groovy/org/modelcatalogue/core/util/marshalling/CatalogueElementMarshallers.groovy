@@ -24,6 +24,7 @@ abstract class CatalogueElementMarshallers extends AbstractMarshallers {
         if (!el) return [:]
         def ret = [
                 id: el.id,
+				modelCatalogueId: el.modelCatalogueId,
                 archived: el.archived,
                 name: el.name,
                 description: el.description,
@@ -38,8 +39,9 @@ abstract class CatalogueElementMarshallers extends AbstractMarshallers {
 
         Map<String, Map<String, String>> relationships = getRelationshipConfiguration(type)
 
-        relationships.incoming?.each addRelationsJson('incoming', el, ret)
-        relationships.outgoing?.each addRelationsJson('outgoing', el, ret)
+        relationships.incoming?.each        addRelationsJson('incoming', el, ret)
+        relationships.outgoing?.each        addRelationsJson('outgoing', el, ret)
+        relationships.bidirectional?.each   addRelationsJson('relationships', el, ret)
 
         ret.availableReports = getAvailableReports(el)
 
@@ -58,15 +60,17 @@ abstract class CatalogueElementMarshallers extends AbstractMarshallers {
     }
 
     static Map<String, Map<String, String>> getRelationshipConfiguration(Class type) {
-        def relationships  = [incoming: [:], outgoing: [:]]
+        def relationships  = [incoming: [:], outgoing: [:], bidirectional: [:]]
         if (type.superclass && CatalogueElement.isAssignableFrom(type.superclass)) {
             def fromSuperclass = getRelationshipConfiguration(type.superclass)
             relationships.incoming.putAll(fromSuperclass.incoming ?: [:])
             relationships.outgoing.putAll(fromSuperclass.outgoing ?: [:])
+            relationships.bidirectional.putAll(fromSuperclass.bidirectional ?: [:])
         }
-        def fromType = GrailsClassUtils.getStaticFieldValue(type, 'relationships') ?: [incoming: [:], outgoing: [:]]
+        def fromType = GrailsClassUtils.getStaticFieldValue(type, 'relationships') ?: [incoming: [:], outgoing: [:], bidirectional: [:]]
         relationships.incoming.putAll(fromType.incoming ?: [:])
         relationships.outgoing.putAll(fromType.outgoing ?: [:])
+        relationships.bidirectional.putAll(fromType.bidirectional ?: [:])
         relationships
     }
 
@@ -81,12 +85,14 @@ abstract class CatalogueElementMarshallers extends AbstractMarshallers {
 
         def relationships = getRelationshipConfiguration(type)
 
-        relationships.incoming?.each addRelationsXml('incoming', el, xml)
-        relationships.outgoing?.each addRelationsXml('outgoing', el, xml)
+        relationships.incoming?.each        addRelationsXml('incoming', el, xml)
+        relationships.outgoing?.each        addRelationsXml('outgoing', el, xml)
+        relationships.bidirectional?.each   addRelationsXml('relationships', el, xml)
     }
 
     protected void addXmlAttributes(el, XML xml) {
         addXmlAttribute(el.id, "id", xml)
+		addXmlAttribute(el.modelCatalogueId, "modelCatalogueId", xml)
         addXmlAttribute(el.archived, "archived", xml)
         addXmlAttribute(el.version, "version", xml)
         addXmlAttribute("/${GrailsNameUtils.getPropertyName(el.getClass())}/$el.id", "link", xml)

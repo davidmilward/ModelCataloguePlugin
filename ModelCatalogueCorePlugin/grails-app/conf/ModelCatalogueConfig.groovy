@@ -66,7 +66,8 @@ modelcatalogue.defaults.datatypes = [
         [name: "xs:decimal" , description: "A decimal value"],
         [name: "xs:int", description: "A signed 32-bit integer"],
         [name: "xs:integer", description: "An integer value"],
-        [name: "xs:long", description: "A signed 64-bit integer"]
+        [name: "xs:long", description: "A signed 64-bit integer"],
+        [name: "xs:boolean", description: "A signed 64-bit integer"]
 ]
 
 
@@ -137,7 +138,8 @@ modelcatalogue.defaults.relationshiptypes =  [
         [name: "inclusion", sourceToDestination: "includes", destinationToSource: "included in", sourceClass: ConceptualDomain, destinationClass: ValueDomain],
         [name: "instantiation", sourceToDestination: "instantiated by", destinationToSource: "instantiates", sourceClass: DataElement, destinationClass: ValueDomain],
         [name: "supersession", sourceToDestination: "superseded by", destinationToSource: "supersedes", sourceClass: PublishedElement, destinationClass: PublishedElement, rule: "source.class == destination.class", system: true],
-        [name: "relatedTo", sourceToDestination: "related to", destinationToSource: "related to", sourceClass: DataElement, destinationClass: DataElement]
+        [name: "relatedTo", sourceToDestination: "related to", destinationToSource: "related to", sourceClass: DataElement, destinationClass: DataElement],
+        [name: "synonym", sourceToDestination: "is synonym for", destinationToSource: "is synonym for", sourceClass: CatalogueElement, destinationClass: CatalogueElement]
 ]
 
 // Uncomment and edit the following lines to start using Grails encoding & escaping improvements

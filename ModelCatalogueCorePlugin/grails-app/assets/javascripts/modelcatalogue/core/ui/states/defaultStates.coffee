@@ -2,6 +2,11 @@ angular.module('mc.core.ui.states.defaultStates', ['ui.router'])
 .controller('mc.core.ui.states.ShowCtrl', ['$scope', '$stateParams', '$state', '$log', 'element', ($scope, $stateParams, $state, $log, element) ->
     $scope.element  = element
 ])
+
+.controller('mc.core.ui.states.DataImportCtrl', ['$scope', '$stateParams', '$state', '$log', 'element', ($scope, $stateParams, $state, $log, element) ->
+    $scope.element  = element
+])
+
 .controller('mc.core.ui.states.ListCtrl', ['$scope', '$stateParams', '$state', '$log', 'list', 'names', 'enhance', 'messages', ($scope, $stateParams, $state, $log, list, names, enhance, messages) ->
     listEnhancer    = enhance.getEnhancer('list')
 
@@ -18,15 +23,18 @@ angular.module('mc.core.ui.states.defaultStates', ['ui.router'])
     ]
 
     $scope.canCreate = ->
-      messages.hasPromptFactory('edit-' + $scope.resource)
-
+      messages.hasPromptFactory('edit-' + $scope.resource) || messages.hasPromptFactory('new-' + $scope.resource)
 
     $scope.create = (resource = null) ->
       resource ?= $scope.resource
-      messages.prompt('Create ' + names.getNaturalName(resource), '', {type: 'edit-' + resource, create: (resource)}).then (created)->
-        created.show()
-#        $scope.list?.reload().then (result) ->
-#          $scope.list = result
+
+      if resource=="import"
+        messages.prompt('New Import', '', {type: 'new-import', create: resource}).then (created)->
+          created.show()
+
+      else
+        messages.prompt('Create ' + names.getNaturalName(resource), '', {type: 'edit-' + resource, create: (resource)}).then (created)->
+          created.show()
 
 
     $scope.getStatusButtonClass = ->
@@ -84,7 +92,7 @@ angular.module('mc.core.ui.states.defaultStates', ['ui.router'])
     templateUrl: 'modelcatalogue/core/ui/state/parent.html'
   }
   $stateProvider.state 'mc.resource.list', {
-    url: '/all?page&order&sort&status'
+    url: '/all?page&order&sort&status&q'
 
     templateUrl: 'modelcatalogue/core/ui/state/list.html'
 
@@ -97,6 +105,10 @@ angular.module('mc.core.ui.states.defaultStates', ['ui.router'])
           params.order  = $stateParams.order ? 'asc'
           params.sort   = $stateParams.sort ? 'name'
           params.status = $stateParams.status ? 'finalized'
+
+          if $stateParams.q
+            return catalogueElementResource($stateParams.resource).search($stateParams.q, params)
+
           catalogueElementResource($stateParams.resource).list(params)
         ]
 
@@ -115,15 +127,28 @@ angular.module('mc.core.ui.states.defaultStates', ['ui.router'])
     controller: 'mc.core.ui.states.ShowCtrl'
   }
 
+  $stateProvider.state 'mc.resource.uuid', {
+    url: '/uuid/:uuid'
+
+    templateUrl: 'modelcatalogue/core/ui/state/show.html'
+
+    resolve:
+      element: ['$stateParams','catalogueElementResource', ($stateParams, catalogueElementResource) ->
+        catalogueElementResource($stateParams.resource).getByUUID($stateParams.uuid)
+      ]
+
+    controller: 'mc.core.ui.states.ShowCtrl'
+  }
+
   $stateProvider.state 'mc.resource.show.property', {url: '/:property?page'}
 
   $stateProvider.state('mc.search', {
-      url: "/search/{searchString}",
+      url: "/search/{q}",
       templateUrl: 'modelcatalogue/core/ui/state/list.html'
       resolve: {
         list: ['$stateParams','modelCatalogueSearch', ($stateParams, modelCatalogueSearch) ->
-          $stateParams.resource = "dataElement"
-          return modelCatalogueSearch($stateParams.searchString)
+          $stateParams.resource = "searchResult"
+          return modelCatalogueSearch($stateParams.q)
         ]
       },
       controller: 'mc.core.ui.states.ListCtrl'
@@ -236,7 +261,43 @@ angular.module('mc.core.ui.states.defaultStates', ['ui.router'])
     controller: 'mc.core.ui.states.ListCtrl'
   }
 
+  $stateProvider.state 'mc.dataArchitect.imports', {
+    abstract: true
+    url: '/imports'
+    templateUrl: 'modelcatalogue/core/ui/state/parent.html'
+  }
+
+  $stateProvider.state 'mc.dataArchitect.imports.list', {
+    url: '/all?page&order&sort&status'
+    templateUrl: 'modelcatalogue/core/ui/state/list.html'
+    resolve:
+      list: ['$stateParams','modelCatalogueDataArchitect', ($stateParams, modelCatalogueDataArchitect) ->
+        $stateParams.resource = "import"
+        page = parseInt($stateParams.page ? 1, 10)
+        page = 1 if isNaN(page)
+        # it's safe to call top level for each controller, only model controller will respond on it
+        params        = offset: (page - 1) * DEFAULT_ITEMS_PER_PAGE, toplevel: true
+        params.order  = $stateParams.order ? 'asc'
+        params.sort   = $stateParams.sort ? 'name'
+        return modelCatalogueDataArchitect.imports(params)
+      ]
+
+    controller: 'mc.core.ui.states.ListCtrl'
+  }
+
+  $stateProvider.state 'mc.dataArchitect.imports.show', {
+    url: '/{id:\\d+}'
+    templateUrl: 'modelcatalogue/core/ui/state/dataImport.html'
+    resolve:
+      element: ['$stateParams','modelCatalogueDataArchitect', ($stateParams, modelCatalogueDataArchitect) ->
+        $stateParams.resource = "Import"
+        return modelCatalogueDataArchitect.getImport($stateParams.id)
+      ]
+
+    controller: 'mc.core.ui.states.DataImportCtrl'
+  }
 ])
+
 .run(['$rootScope', '$state', '$stateParams', ($rootScope, $state, $stateParams) ->
     # It's very handy to add references to $state and $stateParams to the $rootScope
     # so that you can access them from any scope within your applications.For example,
@@ -251,11 +312,12 @@ angular.module('mc.core.ui.states.defaultStates', ['ui.router'])
     <ui-view></ui-view>
   '''
 
+  #language=HTML
   $templateCache.put 'modelcatalogue/core/ui/state/list.html', '''
     <div ng-if="resource != 'model'">
       <span class="pull-right">
-        <a ng-click="create()" ng-show="canCreate() &amp;&amp; resource != 'dataType'" class="btn btn-sm btn-success"><span class="glyphicon glyphicon-plus-sign"></span> New {{title}}</a>
-        <div class="btn-group btn-group-sm" ng-show="canCreate() &amp;&amp; resource == 'dataType'">
+        <a  ng-click="create()" ng-show="canCreate() &amp;&amp; resource != 'dataType' &amp;&amp; $security.hasRole('CURATOR')" class="btn btn-sm btn-success"><span class="glyphicon glyphicon-plus-sign"></span> New {{title}}</a>
+        <div class="btn-group btn-group-sm" ng-show="canCreate() &amp;&amp; resource == 'dataType' &amp;&amp; $security.hasRole('CURATOR')">
           <button type="button" class="btn btn-success dropdown-toggle">
             <span class="glyphicon glyphicon-download-alt"></span> New Data Type <span class="caret"></span>
           </button>
@@ -264,7 +326,7 @@ angular.module('mc.core.ui.states.defaultStates', ['ui.router'])
             <li><a ng-click="create('enumeratedType')">New Enumerated Type</a></li>
           </ul>
         </div>
-        <div class="btn-group btn-group-sm" ng-show="resource == 'dataElement' || resource == 'asset' ">
+        <div class="btn-group btn-group-sm" ng-show="(resource == 'dataElement' || resource == 'asset') &amp;&amp; $security.hasRole('CURATOR')">
           <button type="button" class="btn dropdown-toggle" ng-class="getStatusButtonClass()">
             <span class="glyphicon" ng-class="getStatusIconClass()"></span> {{natural($stateParams.status || 'finalized')}} <span class="caret"></span>
           </button>
@@ -275,25 +337,25 @@ angular.module('mc.core.ui.states.defaultStates', ['ui.router'])
           </ul>
         </div>
         <div class="btn-group btn-group-sm">
-          <button type="button" class="btn btn-primary dropdown-toggle" ng-disabled="list.availableReports &amp;&amp; list.availableReports.length == 0">
+          <button type="button" class="btn btn-primary dropdown-toggle" ng-disabled="list.availableReports &amp;&amp; list.availableReports.length == 0" id="exportBtn">
             <span class="glyphicon glyphicon-download-alt"></span> Export <span class="caret"></span>
           </button>
-          <ul class="dropdown-menu" role="menu">
+          <ul class="dropdown-menu" role="menu" id="exportBtnItems">
             <li><a ng-href="{{report.url}}" target="_blank" ng-repeat="report in list.availableReports">{{report.title}}</a></li>
           </ul>
         </div>
       </span>
       <h2>{{title}} List</h2>
-      <decorated-list list="list" columns="columns"></decorated-list>
+      <decorated-list list="list" columns="columns" state-driven="true"></decorated-list>
     </div>
     <div ng-if="resource == 'model'">
       <div class="row">
         <div class="col-md-4">
           <h2>
             Model Hierarchy
-            <span class="pull-right btn-group">
-              <a ng-click="create()" ng-show="canCreate() &amp;&amp; resource != 'dataType'" class="btn btn-sm btn-success"><span class="glyphicon glyphicon-plus-sign"></span></a>
-              <div class="btn-group btn-group-sm">
+            <span show-for-role="CURATOR" class="pull-right btn-group">
+              <a  ng-click="create()" ng-show="canCreate() &amp;&amp; resource != 'dataType'" class="btn btn-sm btn-success"><span class="glyphicon glyphicon-plus-sign"></span></a>
+              <div show-for-role="CURATOR" class="btn-group btn-group-sm">
                 <button type="button" class="btn dropdown-toggle" ng-class="getStatusButtonClass()" title="Show">
                   <span class="glyphicon" ng-class="getStatusIconClass()"></span>
                 </button>
@@ -306,13 +368,32 @@ angular.module('mc.core.ui.states.defaultStates', ['ui.router'])
             </span>
           </h2>
         </div>
-        <div class="col-md-8"><h3 ng-show="selectedElement">{{selectedElement.name}} Data Elements</h3></div>
+        <div class="col-md-8">
+
+          <h3 ng-show="selectedElement">{{selectedElement.name}} Data Elements
+            <span class="pull-right">
+              <div class="btn-group btn-group-sm">
+                <button id="exportBtn" type="button" class="btn btn-primary dropdown-toggle" ng-disabled="contained &amp;&amp; contained.elements.availableReports &amp;&amp; contained.elements.availableReports.length == 0  &amp;&amp; !selectedElement.availableReports">
+                  <span class="glyphicon glyphicon-download-alt"></span> Export <span class="caret"></span>
+                </button>
+                <ul class="dropdown-menu" role="menu" id="exportBtnItems">
+                  <li role="presentation" class="dropdown-header">{{selectedElement.name}} Exports</li>
+                  <li><a ng-href="{{report.url}}" target="_blank" ng-repeat="report in selectedElement.availableReports">{{report.title || 'Export'}}</a></li>
+                  <li class="divider" role="presentation" ng-show="contained.elements.availableReports &amp;&amp; contained.elements.availableReports.length != 0 &amp;&amp; selectedElement.availableReports"></li>
+                  <li role="presentation" class="dropdown-header" ng-show="contained.elements.availableReports &amp;&amp; contained.elements.availableReports.length != 0">Exports for Data Elements</li>
+                  <li><a ng-href="{{report.url}}"  target="_blank" ng-repeat="report in contained.elements.availableReports">{{report.title || 'Export'}}</a></li>
+                </ul>
+              </div>
+            </span>
+          </h3>
+        </div>
       </div>
       <div class="row">
         <div class="col-md-4">
           <catalogue-element-treeview list="list" descend="'parentOf'"></catalogue-element-treeview>
         </div>
         <div class="col-md-8">
+          <blockquote class="ce-description" ng-show="selectedElement.name">{{selectedElement.description}}</blockquote>
           <decorated-list list="contained.elements" columns="contained.columns" stateless="true"></decorated-list>
         </div>
         <hr/>
@@ -325,6 +406,13 @@ angular.module('mc.core.ui.states.defaultStates', ['ui.router'])
       <catalogue-element-view element="element"></catalogue-element-view>
     </div>
   '''
+
+  $templateCache.put 'modelcatalogue/core/ui/state/dataImport.html', '''
+    <div ng-show="element">
+      <import-view element="element"></import-view>
+    </div>
+  '''
+
 ])
 # debug states
 #.run(['$rootScope', '$log', ($rootScope, $log) ->

@@ -34,7 +34,8 @@ class AbstractPublishedElementController<T> extends AbstractCatalogueElementCont
         def customParams = [:]
         customParams.putAll params
 
-        customParams.sort = 'versionNumber'
+        customParams.sort   = 'versionNumber'
+        customParams.order  = 'desc'
 
         int total = resource.countByModelCatalogueIdLike "$element.bareModelCatalogueId%"
         def list = resource.findAllByModelCatalogueIdLike "$element.bareModelCatalogueId%", customParams
@@ -44,6 +45,15 @@ class AbstractPublishedElementController<T> extends AbstractCatalogueElementCont
                 items: list,
                 total: total
         )
+    }
+
+
+
+    protected Map getParametersToBind() {
+        Map ret = super.parametersToBind
+        ret.remove 'modelCatalogueId'
+        ret.remove 'versionNumber'
+        ret
     }
 
 }

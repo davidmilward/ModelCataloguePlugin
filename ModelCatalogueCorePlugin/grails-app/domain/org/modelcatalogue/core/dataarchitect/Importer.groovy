@@ -314,13 +314,34 @@ class Importer {
         return dataElement
     }
 
-    protected ValueDomain importValueDomain(Map vdParams, DataElement dataElement, ConceptualDomain cd) {
+    def  importValueDomain(Map vdParams, DataElement dataElement, ConceptualDomain cd) {
         ValueDomain vd = ValueDomain.findByDataTypeAndUnitOfMeasure(vdParams.dataType, vdParams.unitOfMeasure)
         if (!vd) { vd = new ValueDomain(vdParams).save() }
-        vd.addToIncludedIn(cd)
-        vd.addToInstantiates(dataElement)
-        vd.save()
+        if (!vd) { vd = new ValueDomain(vdParams).save() }
+        if (vd) {
+            vd.addToIncludedIn(cd)
+            if (dataElement != null) vd.addToInstantiates(dataElement)
+            vd.save()
+        }
+        else { println("Value Domain: " + vdParams.name + " not imported.") }
     }
+
+    def  importValueDomain(String name, String description, DataType dataType, String regexDef, ConceptualDomain cd) {
+        ValueDomain vd = ValueDomain.findByDataType(dataType)
+        if (!vd) {
+            vd = new ValueDomain(name: name, description: description, dataType: dataType).save()
+            if (regexDef!=""){
+                vd.setRegexDef(regexDef)
+                vd.save()
+            }
+        }
+        if (vd) {
+            vd.addToIncludedIn(cd)
+            vd.save()
+        }
+        else { println("Value Domain: " + name + " not imported.") }
+    }
+
 
     protected DataElement importDataElement(Map params, Map metadata, Model model, Map vdParams, ConceptualDomain cd) {
 

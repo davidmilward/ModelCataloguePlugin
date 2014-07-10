@@ -30,12 +30,18 @@ angular.module('mc.core.ui.bs.columns', []).config ['columnsProvider', (columnsP
     return "#{(asset.size)} B"
 
   columnsProvider.registerColumns 'org.modelcatalogue.core.dataarchitect.ImportRow', [
-    {header: "Model",        value: 'containingModelName',              class: 'col-md-4', sort: {property: 'containingModelName', type: 'alphabet'}}
-    {header: "Data Element",        value: 'dataElementName',              class: 'col-md-4', sort: {property: 'dataElementName', type: 'alphabet'}}
+    {header: "Model Path",        value: " parentModelName + ' -> ' + containingModelName",              class: 'col-md-2', sort: {property: 'containingModelName', type: 'alphabet'}}
+    {header: "Data Element",        value: 'dataElementName',              class: 'col-md-2', sort: {property: 'dataElementName', type: 'alphabet'}}
+    {
+      header: "Data Type",
+      value: (row) -> if row.dataType then row.dataType.replace /\|/g , "\n"
+      class: 'col-md-2',
+      sort: {property: 'dataType', type: 'alphabet'}
+    }
     {
       header: "Row Actions"
-      value: (row) -> row.actions?.join('\n\n')
-      class: 'col-md-4'
+      value: (row) -> if row.actions then row.actions?.join('\n\n')
+      class: 'col-md-6'
       sort: {property: 'actions', type: 'alphabet'}
     }
   ]
@@ -81,7 +87,7 @@ angular.module('mc.core.ui.bs.columns', []).config ['columnsProvider', (columnsP
   ]
 
   columnsProvider.registerColumns 'org.modelcatalogue.core.RelationshipType', [
-    {header: 'Name', value: 'name', classes: 'col-md-2', sort: {property: 'name', type: 'alphabet'}}
+    {header: 'Name', value: 'name', classes: 'col-md-2', show: true, sort: {property: 'name', type: 'alphabet'}}
     {header: 'Source to Destination', value: 'sourceToDestination', classes: 'col-md-2', sort: {property: 'sourceToDestination', type: 'alphabet'}}
     {header: 'Destination to Source', value: 'destinationToSource', classes: 'col-md-2', sort: {property: 'destinationToSource', type: 'alphabet'}}
     {header: 'Source Class', value: 'sourceClass', classes: 'col-md-3', sort: {property: 'sourceClass', type: 'alphabet'}}

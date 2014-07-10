@@ -34,7 +34,7 @@ import org.modelcatalogue.core.util.SecuredRuleExecutor
  *
 */
 
-class ValueDomain extends CatalogueElement  {
+class ValueDomain extends ExtendibleElement  {
 
     //WIP gormElasticSearch will support aliases in the future for now we will use searchable
 
@@ -44,10 +44,7 @@ class ValueDomain extends CatalogueElement  {
         unitOfMeasure component:true
         incomingRelationships component: true
         outgoingRelationships component: true
-        except = ['includedIn', 'instantiates', 'regexDef']
     }
-
-    //FIXME valueDomain needs to be unique within a conceptual domain
 
 	MeasurementUnit unitOfMeasure
 	String rule
@@ -66,7 +63,8 @@ class ValueDomain extends CatalogueElement  {
 
 
     static relationships = [
-        incoming: [inclusion: 'includedIn', instantiation: 'instantiates']
+        incoming: [inclusion: 'includedIn', instantiation: 'instantiates', base: 'basedOn'],
+        outgoing: [base: 'isBaseFor']
     ]
 
     void setRegexDef(String regex) {

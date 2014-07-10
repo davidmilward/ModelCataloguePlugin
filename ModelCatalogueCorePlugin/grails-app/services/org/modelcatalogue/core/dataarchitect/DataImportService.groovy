@@ -5,9 +5,11 @@ import org.modelcatalogue.core.ConceptualDomain
 import org.modelcatalogue.core.DataElement
 import org.modelcatalogue.core.DataType
 import org.modelcatalogue.core.EnumeratedType
+import org.modelcatalogue.core.ExtendibleElement
 import org.modelcatalogue.core.MeasurementUnit
 import org.modelcatalogue.core.Model
 import org.modelcatalogue.core.PublishedElementStatus
+import org.modelcatalogue.core.Relationship
 import org.modelcatalogue.core.ValueDomain
 
 class DataImportService {
@@ -51,7 +53,7 @@ class DataImportService {
             def metadataColumns = [:]
             while (counter <= metadataEndIndex) {
                 String key = headers[counter].toString()
-                String value = row[counter].toString()
+                String value = (row[counter]!=null) ? row[counter].toString() : ""
                 metadataColumns.put(key, value)
                 counter++
             }
@@ -147,6 +149,14 @@ class DataImportService {
                 RowAction action = new RowAction(field: "dataType", action: "the row does not contain a data type therefore will not be associated with a value domain, is this the expected outcome?", actionType: ActionType.DECISION).save()
                 row.addToRowActions(action)
             }
+            if (row.dataType.contains("|")) {
+                try {
+                    row.dataType = sortEnumAsString(row.dataType)
+                } catch (Exception e) {
+                    RowAction action = new RowAction(field: "dataType", action: "the row has an invalid enumerated data type. Please action to import row", actionType: ActionType.RESOLVE_ERROR).save()
+                    row.addToRowActions(action)
+                }
+            }
         }
         return row
     }
@@ -195,7 +205,7 @@ class DataImportService {
                     importDataElement([name: row.dataElementName, description: row.dataElementDescription, modelCatalogueId: row.dataElementCode], row.metadata, model, [name: row.dataElementName.replaceAll("\\s", "_"), description: row.dataType.toString().take(2000), dataType: dataType, measurementUnit: measurementUnit], conceptualDomain)
                 } else {
                     //doesn't have a value domain so easy
-                    importDataElement([name: row.dataElementName, description: row.dataElementDescription, modelCatalogueId: row.dataElementCode], row.metadata, model)
+                    importDataElement([name: row.dataElementName, description: row.dataElementDescription, modelCatalogueId: row.dataElementCode], row.metadata, model, conceptualDomain)
                 }
             }
             if(!bulkIngest) importer.removeFromImportQueue(row)
@@ -217,7 +227,7 @@ class DataImportService {
 
     protected Model addModelToImport(DataImport importer, Model model) {
         if (!importer.models.find{it.id == model.id}) {
-            if(model.status != PublishedElementStatus.UPDATED){model.status = PublishedElementStatus.PENDING}
+            if(model.status != PublishedElementStatus.UPDATED){model.status = PublishedElementStatus.DRAFT}
             model.save()
             importer.models.add(model)
         }
@@ -307,14 +317,14 @@ class DataImportService {
         }
     }
 
-    protected DataElement updateMetadata(Map metadata, DataElement dataElement) {
+    protected ExtendibleElement updateMetadata(Map metadata, ExtendibleElement instance) {
         metadata.each { key, value ->
             if (key) { key = key.toString().take(255) }
             if (value) { value = value.toString().take(255) }
-            dataElement.ext.put(key, value)
+            instance.ext.put(key, value)
         }
-        dataElement.save()
-        dataElement
+        instance.save()
+        instance
     }
 
     protected Boolean checkValueDomainForChanges(Map params, ValueDomain valueDomain, ConceptualDomain cd){
@@ -351,8 +361,8 @@ class DataImportService {
             dataElement.status = PublishedElementStatus.UPDATED
             dataElement.save()
             dataElement = updateMetadata(metadata, dataElement)
-            if(model.status!=PublishedElementStatus.UPDATED && model.status!=PublishedElementStatus.PENDING){
-                model.status = PublishedElementStatus.PENDING
+            if(model.status!=PublishedElementStatus.UPDATED && model.status!=PublishedElementStatus.DRAFT){
+                model.status = PublishedElementStatus.DRAFT
                 model.save()
             }
         }
@@ -389,8 +399,8 @@ class DataImportService {
 
             }
 
-            if(model.status!=PublishedElementStatus.UPDATED && model.status!=PublishedElementStatus.PENDING){
-                model.status = PublishedElementStatus.PENDING
+            if(model.status!=PublishedElementStatus.UPDATED && model.status!=PublishedElementStatus.DRAFT){
+                model.status = PublishedElementStatus.DRAFT
                 model.save()
             }
         }
@@ -401,7 +411,8 @@ class DataImportService {
         ValueDomain vd = ValueDomain.findByDataTypeAndUnitOfMeasure(vdParams.dataType, vdParams.unitOfMeasure)
         if (!vd) { vd = new ValueDomain(vdParams).save() }
         vd.addToIncludedIn(cd)
-        vd.addToInstantiates(dataElement)
+        Relationship instantiated = vd.addToInstantiates(dataElement)
+        instantiated.ext.put("Context" , cd.name)
         vd.save()
     }
 
@@ -427,13 +438,14 @@ class DataImportService {
         }
 
         importValueDomain(vdParams, de, cd)
-        de.addToContainedIn(model)
+        Relationship containedIn = de.addToContainedIn(model)
+        containedIn.ext.put("Context" , cd.name)
 
         return de
     }
 
 
-    protected DataElement importDataElement(Map params, Map metadata, Model model) {
+    protected DataElement importDataElement(Map params, Map metadata, Model model, ConceptualDomain cd) {
 
         //find out if data element exists using unique code
         DataElement de = DataElement.findByModelCatalogueId(params.modelCatalogueId)
@@ -454,7 +466,10 @@ class DataImportService {
             de = updateMetadata(metadata, de)
         }
 
-        if(de){de.addToContainedIn(model)}
+        if(de){
+            Relationship  containedIn = de.addToContainedIn(model)
+            containedIn.ext.put("Context" , cd.name)
+        }
         return de
     }
 
@@ -476,18 +491,24 @@ class DataImportService {
 
 
     def importDataType(String name, String data) {
-        DataType dataTypeReturn = importEnumeratedType(data)
+        DataType dataTypeReturn = importEnumeratedType(data, name)
         if(!dataTypeReturn) dataTypeReturn = DataType.findByName(data)
         if(!dataTypeReturn) dataTypeReturn = DataType.findByNameIlike(data)
         return dataTypeReturn
     }
 
-    protected static EnumeratedType importEnumeratedType(String data){
-        def dataTypeReturn, sortedData
+    protected EnumeratedType importEnumeratedType(String data, String name){
+        def dataTypeReturn
         if (data.contains("|")) {
-            try { sortedData = sortEnumAsString(data) } catch (Exception e) { return null }
-            dataTypeReturn = EnumeratedType.findByEnumAsString(sortedData)
-            if (!dataTypeReturn) { dataTypeReturn = new EnumeratedType(name:  ( (sortedData.size()>20) ? sortedData[0..20] : sortedData ) + "..", enumAsString: sortedData).save() }
+            dataTypeReturn = EnumeratedType.findByEnumAsString(data)
+            if (!dataTypeReturn) {
+                try {
+                    dataTypeReturn = new EnumeratedType(name:  name, enumAsString: data).save()
+                }
+                catch (Exception e) {
+                    log.error "Error: ${e.message}", e
+                }
+            }
         } else if (data.contains("\n") || data.contains("\r")) {
             String[] lines = data.split("\\r?\\n")
             if (lines.size() > 0 && lines[] != null) {
@@ -514,7 +535,12 @@ class DataImportService {
                     }.join('|')
                     dataTypeReturn = EnumeratedType.findWhere(enumAsString: enumString)
                     if (!dataTypeReturn) {
-                        dataTypeReturn = new EnumeratedType(name:  ( (enumString.size()>20) ? enumString[0..20] : enumString ) + "..", enumerations: enumerations).save()
+                        try {
+                            dataTypeReturn = new EnumeratedType(name:  name, enumerations: enumerations).save()
+                        }
+                        catch (Exception e) {
+                            log.error "Error: ${e.message}", e
+                        }
                     }
                 }
             }
@@ -524,13 +550,13 @@ class DataImportService {
 
 
 
-    protected static String sortEnumAsString(String inputString) {
+    protected String sortEnumAsString(String inputString) {
         if (inputString == null) return null
         String sortedString
         Map<String, String> ret = [:]
         inputString.split(/\|/).each { String part ->
             if (!part) return
-            String[] pair = part.split(/:/)
+            String[] pair = part.split("(?<!\\\\):")
             if (pair.length != 2) throw new IllegalArgumentException("Wrong enumerated value '$part' in encoded enumeration '$s'")
             ret[unquote(pair[0])] = unquote(pair[1])
         }
@@ -540,7 +566,7 @@ class DataImportService {
         sortedString
     }
 
-    protected static String quote(String s) {
+    protected String quote(String s) {
         if (s == null) return null
         String ret = s
         QUOTED_CHARS.each { original, replacement ->
@@ -549,7 +575,7 @@ class DataImportService {
         ret
     }
 
-    protected static String unquote(String s) {
+    protected String unquote(String s) {
         if (s == null) return null
         String ret = s
         QUOTED_CHARS.reverseEach { original, pattern ->

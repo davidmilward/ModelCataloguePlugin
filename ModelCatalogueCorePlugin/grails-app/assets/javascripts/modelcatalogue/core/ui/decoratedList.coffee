@@ -13,13 +13,15 @@ angular.module('mc.core.ui.decoratedList', ['mc.core.listEnhancer', 'mc.core.ui.
       pageParam: '@'
       sortParam: '@'
       orderParam: '@'
+      maxParam: '@'
 
     templateUrl: 'modelcatalogue/core/ui/decoratedList.html'
 
     controller: ['$scope', 'columns', '$q', '$rootScope', '$state', '$stateParams' , ($scope, columns, $q, $rootScope, $state, $stateParams) ->
-      pageParam = $scope.pageParam ? 'page'
-      sortParam = $scope.sortParam ? 'sort'
-      orderParam = $scope.orderParam ? 'order'
+      pageParam   = $scope.pageParam ? 'page'
+      sortParam   = $scope.sortParam ? 'sort'
+      orderParam  = $scope.orderParam ? 'order'
+      maxParam    = $scope.maxParam ? 'max'
 
       $scope.id = null if !$scope.id
 
@@ -54,10 +56,13 @@ angular.module('mc.core.ui.decoratedList', ['mc.core.listEnhancer', 'mc.core.ui.
         if newParams[orderParam] =='asc'
           newParams[orderParam] = undefined
 
+        if newParams[maxParam] == 10
+          newParams[maxParam] = undefined
 
         $state.go '.', newParams
 
       onListChange = (list) ->
+        $scope.currentMax = list?.page
         if !columnsDefined
           $scope.columns = columns(list.itemType)
         if list.total is 0
@@ -120,6 +125,13 @@ angular.module('mc.core.ui.decoratedList', ['mc.core.listEnhancer', 'mc.core.ui.
             $scope.loading = false
             $scope.list = result
 
+      $scope.setMax = (newMax) ->
+        if $scope.list and $scope.stateDriven and not $state.current.abstract and not $scope.stateless
+          changeStateFor $scope.list, max: newMax
+        else
+          $scope.list.reload(max: newMax).then (newList)->
+            $scope.list = newList
+
       hasNextOrPrev = (nextOrPrevFn) -> nextOrPrevFn.size? and nextOrPrevFn.size != 0
 
       $scope.previous       = -> nextOrPrev($scope.list.previous)
@@ -157,7 +169,7 @@ angular.module('mc.core.ui.decoratedList', ['mc.core.listEnhancer', 'mc.core.ui.
         count
 
       $scope.getActionsClass = () ->
-        ' col-md-2'
+        ' col-md-1'
 
       $scope.getActionClass = (action) ->
         return "btn-#{action.type}" if action.type?

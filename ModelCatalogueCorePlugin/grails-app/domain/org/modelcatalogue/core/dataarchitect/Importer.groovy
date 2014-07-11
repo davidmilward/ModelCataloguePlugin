@@ -186,7 +186,7 @@ class Importer {
         return model
     }
 
-    protected Model matchOrCreateModel(Map modelParams, ConceptualDomain conceptualDomain) {
+    def Model matchOrCreateModel(Map modelParams, ConceptualDomain conceptualDomain) {
         //check cache of models to see if it has already been created
         Model model = models.find{it.name == modelParams.name}
         if(!model && modelParams.name){
@@ -327,7 +327,7 @@ class Importer {
     }
 
     def  importValueDomain(String name, String description, DataType dataType, String regexDef, ConceptualDomain cd) {
-        ValueDomain vd = ValueDomain.findByDataType(dataType)
+        ValueDomain vd = ValueDomain.findByDataTypeAndName(dataType, name)
         if (!vd) {
             vd = new ValueDomain(name: name, description: description, dataType: dataType).save()
             if (regexDef!=""){

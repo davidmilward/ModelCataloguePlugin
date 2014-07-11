@@ -275,6 +275,8 @@ class DataImportService {
         return model
     }
 
+
+
     protected Model matchOrCreateModel(DataImport importer, Map modelParams, ConceptualDomain conceptualDomain) {
         //check cache of models to see if it has already been created
         Model model = importer.models.find{it.name == modelParams.name}
@@ -317,7 +319,7 @@ class DataImportService {
         }
     }
 
-    protected ExtendibleElement updateMetadata(Map metadata, ExtendibleElement instance) {
+    def ExtendibleElement updateMetadata(Map metadata, ExtendibleElement instance) {
         metadata.each { key, value ->
             if (key) { key = key.toString().take(255) }
             if (value) { value = value.toString().take(255) }

@@ -63,7 +63,7 @@ class DataImportService {
         }
 
         newImporter.save(flush:true, failOnError:true)
-        resolveAll(newImporter)
+        return (newImporter)
     }
 
     def resolveRow(DataImport importer, ImportRow importRow) {

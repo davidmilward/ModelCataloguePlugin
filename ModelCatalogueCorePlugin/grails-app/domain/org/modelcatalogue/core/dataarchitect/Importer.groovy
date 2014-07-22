@@ -323,7 +323,9 @@ class Importer {
             if (dataElement != null) vd.addToInstantiates(dataElement)
             vd.save()
         }
-        else { println("Value Domain: " + vdParams.name + " not imported.") }
+        else {
+            println("Value Domain: " + vdParams.name + " not imported.")
+        }
     }
 
     def  importValueDomain(String name, String description, DataType dataType, String regexDef, ConceptualDomain cd) {
@@ -339,7 +341,9 @@ class Importer {
             vd.addToIncludedIn(cd)
             vd.save()
         }
-        else { println("Value Domain: " + name + " not imported.") }
+        else {
+            println("Value Domain: " + name + " not imported.")
+        }
     }
 
 

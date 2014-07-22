@@ -23,7 +23,7 @@ grails.project.fork = [
 
 
 grails.plugin.location.'ModelCatalogueCorePlugin' = "../ModelCatalogueCorePlugin"
-grails.plugin.location.'ModelCatalogueElasticSearchPlugin' = "../ModelCatalogueElasticSearchPlugin"
+//grails.plugin.location.'ModelCatalogueElasticSearchPlugin' = "../ModelCatalogueElasticSearchPlugin"
 //grails.plugin.location.'ModelCatalogueDataArchitectPlugin' = "../ModelCatalogueDataArchitectPlugin"
 
 grails.project.dependency.resolver = "maven" // or ivy
@@ -60,7 +60,7 @@ grails.project.dependency.resolution = {
         // runtime 'org.postgresql:postgresql:9.3-1100-jdbc41'
 
         runtime "org.modelcatalogue:spring-security-ajax-aware:0.1.1"
-
+        runtime 'mysql:mysql-connector-java:5.1.24'
     }
 
     plugins {
@@ -81,7 +81,6 @@ grails.project.dependency.resolution = {
         runtime ":resources:1.2.1"
         compile ":csv:0.3.1"
 
-        compile ":quartz:1.0.2"
         // Uncomment these (or add new ones) to enable additional resources capabilities
         //runtime ":zipped-resources:1.0.1"
         //runtime ":cached-resources:1.1"

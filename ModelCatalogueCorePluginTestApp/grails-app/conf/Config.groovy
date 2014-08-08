@@ -106,8 +106,8 @@ log4j = {
     //    console name:'stdout', layout:pattern(conversionPattern: '%c{2} %m%n')
     //}
 
-    debug 'org.modelcatalogue'
-    debug 'org.codehaus.groovy.grails.web.mapping'
+//    debug 'org.modelcatalogue'
+//    debug 'org.codehaus.groovy.grails.web.mapping'
 //    debug 'org.springframework.security'
 //    debug 'org.grails.plugins.elasticsearch'
 
@@ -209,15 +209,30 @@ modelcatalogue.defaults.relationshiptypes = [
         [name: "inclusion", sourceToDestination: "includes", destinationToSource: "included in", sourceClass: ConceptualDomain, destinationClass: ValueDomain],
         [name: "instantiation", sourceToDestination: "instantiated by", destinationToSource: "instantiates", sourceClass: DataElement, destinationClass: ValueDomain],
         [name: "supersession", sourceToDestination: "superseded by", destinationToSource: "supersedes", sourceClass: PublishedElement, destinationClass: PublishedElement, rule: "source.class == destination.class", system: true],
-        [name: "synonym", sourceToDestination: "is synonym for", destinationToSource: "is synonym for", sourceClass: CatalogueElement, destinationClass: CatalogueElement, bidirectional: true]
+        [name: "synonym", sourceToDestination: "is synonym for", destinationToSource: "is synonym for", sourceClass: CatalogueElement, destinationClass: CatalogueElement, bidirectional: true],
+        [name: "union", sourceToDestination: "is union of", destinationToSource: "is united in", sourceClass: ValueDomain, destinationClass: ValueDomain]
 ]
 
 // configure the default storage
 modelcatalogue.storage.directory = "/tmp/modelcatalogue/storage"
 modelcatalogue.storage.maxSize = 50 * 1024 * 1024
 // Added by the Spring Security Core plugin:
-grails.plugins.springsecurity.userLookup.userDomainClassName = 'org.modelcatalogue.core.testapp.User'
-grails.plugins.springsecurity.userLookup.authorityJoinClassName = 'org.modelcatalogue.core.testapp.UserRole'
-grails.plugins.springsecurity.authority.className = 'org.modelcatalogue.core.testapp.Role'
-grails.plugins.springsecurity.requestMap.className = 'org.modelcatalogue.core.testapp.Requestmap'
-grails.plugins.springsecurity.securityConfigType = 'Requestmap'
+grails.plugin.springsecurity.userLookup.userDomainClassName = 'org.modelcatalogue.core.testapp.User'
+grails.plugin.springsecurity.userLookup.authorityJoinClassName = 'org.modelcatalogue.core.testapp.UserRole'
+grails.plugin.springsecurity.authority.className = 'org.modelcatalogue.core.testapp.Role'
+grails.plugin.springsecurity.requestMap.className = 'org.modelcatalogue.core.testapp.Requestmap'
+grails.plugin.springsecurity.securityConfigType = 'Requestmap'
+
+
+grails.assets.excludes = ["bootstrap/**/*.less", "jquery/**/*.js", "angular/**/*.js"]
+
+grails.assets.plugin."model-catalogue-core-plugin".excludes = ["bootstrap/**/*.less", "jquery/**/*.js", "angular/**/*.js"]
+grails.assets.plugin."model-catalogue-core-plugin".includes = ["bootstrap.less"]
+//
+//grails.assets.minifyOptions = [
+//        strictSemicolons: false,
+//        mangleOptions: [mangle: false, toplevel: false, defines: null, except: null, no_functions:false],
+//        genOptions: [indent_start:0, indent_level:4, quote_keys: false, space_colon: false, beautify: false, ascii_only: false, inline_script:false]
+//]
+
+// grails.assets.minifyJs = false

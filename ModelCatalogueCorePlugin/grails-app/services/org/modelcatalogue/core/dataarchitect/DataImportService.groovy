@@ -281,7 +281,9 @@ class DataImportService {
         //check cache of models to see if it has already been created
         Model model = importer.models.find{it.name == modelParams.name}
         if(!model && modelParams.name){
-            model = new Model(modelParams).save()
+            model = new Model(modelParams)
+            model.modelCatalogueId = modelParams.modelCatalogueId
+            model.save()
             model.addToHasContextOf(conceptualDomain)
         }
         return model
@@ -435,7 +437,9 @@ class DataImportService {
 
         if (!de) {
             params.put('status', PublishedElementStatus.FINALIZED)
-            de = new DataElement(params).save()
+            de = new DataElement(params)
+            de.modelCatalogueId = params.modelCatalogueId
+            de.save()
             de = updateMetadata(metadata, de)
         }
 
@@ -464,7 +468,9 @@ class DataImportService {
 
         if (!de && params.name) {
             params.put('status', PublishedElementStatus.FINALIZED)
-            de = new DataElement(params).save()
+            de = new DataElement(params)
+            de.modelCatalogueId = params.modelCatalogueId
+            de.save()
             de = updateMetadata(metadata, de)
         }
 

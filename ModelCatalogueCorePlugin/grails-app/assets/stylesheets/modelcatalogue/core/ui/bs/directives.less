@@ -97,7 +97,7 @@ blockquote, .dl-table-item-cell, .pp-table-property-value {
   float: right!important;
 }
 
-.messages-panel, .growl {
+.messages-panel.growl {
   position: fixed;
   right:    15px;
   bottom:   15px;
@@ -154,5 +154,9 @@ blockquote, .dl-table-item-cell, .pp-table-property-value {
 @-o-keyframes my_animation {
   from { opacity:1; }
   to { opacity:0; }
+}
+
+.messages-modal-confirm .modal-body {
+  white-space: pre-line;
 }
 

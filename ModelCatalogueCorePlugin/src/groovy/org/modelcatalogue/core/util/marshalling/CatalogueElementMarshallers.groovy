@@ -9,6 +9,7 @@ import org.modelcatalogue.core.RelationshipType
 import org.modelcatalogue.core.RelationshipTypeService
 import org.modelcatalogue.core.reports.ReportDescriptor
 import org.modelcatalogue.core.reports.ReportsRegistry
+import org.modelcatalogue.core.util.CatalogueElementFinder
 import org.springframework.beans.factory.annotation.Autowired
 
 /**
@@ -33,7 +34,10 @@ abstract class CatalogueElementMarshallers extends AbstractMarshallers {
                 description: el.description,
                 version: el.version,
                 elementType: el.class.name,
+                elementTypes: CatalogueElementFinder.getAllTypesNames(el.class),
                 elementTypeName: GrailsNameUtils.getNaturalName(el.class.simpleName),
+                dateCreated: el.dateCreated,
+                lastUpdated: el.lastUpdated,
                 link:  "/${GrailsNameUtils.getPropertyName(el.getClass())}/$el.id",
                 relationships: [count: el.countRelations(), itemType: Relationship.name, link: "/${GrailsNameUtils.getPropertyName(el.getClass())}/$el.id/relationships"],
                 outgoingRelationships: [count: el.countOutgoingRelations(), itemType: Relationship.name, link: "/${GrailsNameUtils.getPropertyName(el.getClass())}/$el.id/outgoing"],
@@ -141,6 +145,8 @@ abstract class CatalogueElementMarshallers extends AbstractMarshallers {
 		addXmlAttribute(el.modelCatalogueId, "modelCatalogueId", xml)
         addXmlAttribute(el.archived, "archived", xml)
         addXmlAttribute(el.version, "version", xml)
+        addXmlAttribute(el.dateCreated, "dateCreated", xml)
+        addXmlAttribute(el.lastUpdated, "lastUpdated", xml)
         addXmlAttribute("/${GrailsNameUtils.getPropertyName(el.getClass())}/$el.id", "link", xml)
         addXmlAttribute(el.class.name, "elementType", xml)
         addXmlAttribute(GrailsNameUtils.getNaturalName(el.class.simpleName), "elementTypeName", xml)

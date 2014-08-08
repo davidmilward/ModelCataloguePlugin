@@ -15,11 +15,11 @@
     %{--</div>--}%
     %{--</script>--}%
 
-    <asset:stylesheet href="metadataCurator.css"/>
-    <asset:javascript src="metadataCurator.js"/>
+    <asset:stylesheet href="metaDataCurator.css"/>
+    <asset:javascript src="metaDataCurator.js"/>
     <script type="text/javascript">
         var demoConfig = angular.module('demo.config', ['mc.core.modelCatalogueApiRoot', 'mc.util.security'])
-        demoConfig.config(function (securityProvider) {
+        demoConfig.config(['securityProvider', function (securityProvider) {
             securityProvider.springSecurity({
                 contextPath: '${request.contextPath ?: ''}',
                 roles: {
@@ -29,12 +29,12 @@
                 },
                 <sec:ifLoggedIn>
                 currentUser: {
-                    roles: ${org.codehaus.groovy.grails.plugins.springsecurity.SpringSecurityUtils.getPrincipalAuthorities()*.authority.encodeAsJSON()},
+                    roles: ${grails.plugin.springsecurity.SpringSecurityUtils.getPrincipalAuthorities()*.authority.encodeAsJSON()},
                     username: '${sec.username()}'
                 }
                 </sec:ifLoggedIn>
             })
-        })
+        }])
         demoConfig.value('modelCatalogueApiRoot', '${request.contextPath ?: ''}/api/modelCatalogue/core')
     </script>
 

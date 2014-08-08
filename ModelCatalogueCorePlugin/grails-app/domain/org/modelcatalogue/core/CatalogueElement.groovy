@@ -19,6 +19,11 @@ abstract class CatalogueElement {
     String description
 	String modelCatalogueId = "MC_" + UUID.randomUUID() + "_" + 1
 
+
+    // time stamping
+    Date dateCreated
+    Date lastUpdated
+
     static transients = ['relations', 'info', 'archived', 'incomingRelations', 'outgoingRelations']
 
     static hasMany = [incomingRelationships: Relationship, outgoingRelationships: Relationship, outgoingMappings: Mapping,  incomingMappings: Mapping]
@@ -31,7 +36,7 @@ abstract class CatalogueElement {
     static constraints = {
         name size: 1..255
         description nullable: true, maxSize: 2000
-		modelCatalogueId nullable: true, unique: true, maxSize: 255, matches: '(?i)MC_([A-Z0-9]{8}-[A-Z0-9]{4}-[A-Z0-9]{4}-[A-Z0-9]{4}-[A-Z0-9]{12})_\\d+'
+		modelCatalogueId bindable: false, nullable: true, unique: true, maxSize: 255, matches: '(?i)MC_([A-Z0-9]{8}-[A-Z0-9]{4}-[A-Z0-9]{4}-[A-Z0-9]{4}-[A-Z0-9]{12})_\\d+'
     }
 
     //WIP gormElasticSearch will support aliases in the future for now we will use searchable

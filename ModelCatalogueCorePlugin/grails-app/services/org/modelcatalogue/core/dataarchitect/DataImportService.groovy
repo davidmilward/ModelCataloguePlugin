@@ -54,7 +54,7 @@ class DataImportService {
             while (counter <= metadataEndIndex) {
                 String key = headers[counter].toString()
                 String value = (row[counter]!=null) ? row[counter].toString() : ""
-                metadataColumns.put(key, value)
+                if (key!="") metadataColumns.put(key, value)
                 counter++
             }
             importRow.metadata = (metadataColumns)?metadataColumns:null

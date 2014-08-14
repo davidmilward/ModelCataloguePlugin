@@ -30,8 +30,9 @@ class ActionMarshaller extends AbstractMarshallers {
                 dateCreated: el.dateCreated,
                 lastUpdated: el.lastUpdated,
                 state: el.state?.toString(),
-                dependsOn: el.dependsOn.collect { it.provider.id },
-                dependencies: el.dependencies.collect { it.dependant.id },
+                result: el.result,
+                dependsOn: el.dependsOn.collectEntries { [it.provider.id, it.role] } + [length: el.dependsOn.size()],
+                dependencies: el.dependencies.collectEntries { [it.dependant.id, it.role] } + [length: el.dependencies.size()] ,
         ]
 
         if (el.batch) {

@@ -7,7 +7,7 @@ angular.module('mc.core.ui.bs.batchView', ['mc.core.ui.batchView', 'mc.core.ui.d
       <h3 class="ce-name">{{batch.name}} <small ng-show="batch.elementTypeName"><span class="label" ng-show="batch.archived" ng-class="{'label-danger': batch.archived}">{{batch.status}}</span> (created {{batch.dateCreated | date:'short'}})</small></h3>
       <blockquote class="ce-description" ng-show="batch.description" ng-bind-html="'' + batch.description | linky:'_blank'"></blockquote>
       <div class="row">
-        <div class="col-md-6">
+        <div class="col-md-6 pending-actions">
           <h4>Pending Actions</h4>
           <alert type="'info'" ng-hide="loading || pendingActions.length > 0">There no pending actions</alert>
           <alert ng-repeat="action in pendingActions" type="getType(action)" id="action-{{action.id}}">
@@ -17,8 +17,9 @@ angular.module('mc.core.ui.bs.batchView', ['mc.core.ui.batchView', 'mc.core.ui.d
               </div>
               <h4>{{action.naturalName}}
                 <small>
-                  <span class="label label-warning action-label" ng-click="highlight(action.dependsOn)" class="btn btn-warning btn-sm" ng-show="action.dependsOn" title="Depends on {{action.dependsOn.length}} action(s)"><span class="glyphicon glyphicon-open"></span> {{action.dependsOn.length}}</span>
-                  <span class="label label-warning action-label" ng-click="highlight(action.dependencies)" class="btn btn-warning btn-sm" ng-show="action.dependencies" title="{{action.dependencies.length}} other action(s) depends on this action"><span class="glyphicon glyphicon-save"></span> {{action.dependencies.length}}</span>
+                  <span class="label label-warning action-label" ng-click="highlight(action.dependsOn)" class="btn btn-warning btn-sm" ng-show="action.dependsOn.length > 0" title="Depends on {{action.dependsOn.length}} action(s)"><span class="glyphicon glyphicon-open"></span> {{action.dependsOn.length}}</span>
+                  <span class="label label-warning action-label" ng-click="highlight(action.dependencies)" class="btn btn-warning btn-sm" ng-show="action.dependencies.length > 0" title="{{action.dependencies.length}} other action(s) depends on this action"><span class="glyphicon glyphicon-save"></span> {{action.dependencies.length}}</span>
+                  <span class="label label-warning" ng-show="action.highlighted" title="This action is in role '{{action.highlighted}}'">{{natural(action.highlighted)}}</span>
                 </small>
               </h4>
             </div>
@@ -27,7 +28,7 @@ angular.module('mc.core.ui.bs.batchView', ['mc.core.ui.batchView', 'mc.core.ui.d
             <pre ng-show="action.outcome">{{action.outcome}}</pre>
           </alert>
         </div>
-        <div class="col-md-6">
+        <div class="col-md-6 performed-actions">
           <h4>Performed Actions</h4>
           <alert type="'info'" ng-hide="loading || performedActions.length > 0">There no actions performed or failed</alert>
           <alert ng-repeat="action in performedActions" type="getType(action)" id="action-{{action.id}}">

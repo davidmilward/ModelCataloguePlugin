@@ -23,6 +23,8 @@ log4j = {
            'net.sf.ehcache.hibernate'
 }
 
+grails.databinding.dateFormats = ['MMddyyyy', 'yyyy-MM-dd HH:mm:ss.S', "yyyy-MM-dd'T'hh:mm:sss'Z'"]
+
 grails.mime.types = [
         json:          ['application/json', 'text/json'],
         xml:           ['text/xml', 'application/xml'],
@@ -116,6 +118,7 @@ modelcatalogue.defaults.measurementunits = [
 
 modelcatalogue.defaults.relationshiptypes =  [
         [name: "containment", sourceToDestination: "contains", destinationToSource: "contained in", sourceClass: Model, destinationClass: DataElement, metadataHints: "Source Min Occurs, Source Max Occurs, Destination Min Occurs, Destination Max Occurs", rule: '''
+
             Integer sourceMinOccurs = ext['Source Min Occurs'] as Integer
             Integer sourceMaxOccurs = ext['Source Max Occurs'] as Integer
             Integer destinationMinOccurs = ext['Destination Min Occurs'] as Integer
@@ -156,9 +159,10 @@ modelcatalogue.defaults.relationshiptypes =  [
         [name: "inclusion", sourceToDestination: "includes", destinationToSource: "included in", sourceClass: ConceptualDomain, destinationClass: ValueDomain],
         [name: "instantiation", sourceToDestination: "instantiated by", destinationToSource: "instantiates", sourceClass: DataElement, destinationClass: ValueDomain],
         [name: "supersession", sourceToDestination: "superseded by", destinationToSource: "supersedes", sourceClass: PublishedElement, destinationClass: PublishedElement, rule: "source.class == destination.class", system: true],
-        [name: "relatedTo", sourceToDestination: "related to", destinationToSource: "related to", sourceClass: DataElement, destinationClass: DataElement],
-        [name: "synonym", sourceToDestination: "is synonym for", destinationToSource: "is synonym for", sourceClass: CatalogueElement, destinationClass: CatalogueElement, bidirectional: true],
+        [name: "relatedTo", sourceToDestination: "related to", destinationToSource: "related to", sourceClass: CatalogueElement, destinationClass: CatalogueElement, bidirectional: true],
+        [name: "synonym", sourceToDestination: "is synonym for", destinationToSource: "is synonym for", sourceClass: DataElement, destinationClass: DataElement, bidirectional: true],
         [name: "union", sourceToDestination: "is union of", destinationToSource: "is united in", sourceClass: ValueDomain, destinationClass: ValueDomain]
+
 ]
 
 // Uncomment and edit the following lines to start using Grails encoding & escaping improvements

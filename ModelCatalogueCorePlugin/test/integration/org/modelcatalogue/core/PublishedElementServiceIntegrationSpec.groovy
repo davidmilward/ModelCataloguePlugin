@@ -90,6 +90,133 @@ class PublishedElementServiceIntegrationSpec extends AbstractIntegrationSpec {
 
         author.supersedes.contains(anotherArchived)
         anotherArchived.supersedes.contains(archived)
+        author.status == PublishedElementStatus.DRAFT
+    }
+
+    def "create new version of heirachy model"() {
+
+        setup:
+        Model md1      = new Model(name:"test1").save()
+        Model md2      = new Model(name:"test2").save()
+        Model md3      = new Model(name:"test3").save()
+
+        md1.addToParentOf(md2)
+        md2.addToParentOf(md3)
+
+        int originalVersion     = md2.versionNumber
+        Model archived    = publishedElementService.archiveAndIncreaseVersion(md2)
+        int archivedVersion     = archived.versionNumber
+        int newVersion          = md2.versionNumber
+
+        def archivedrel = relationshipService.getRelationships([:], RelationshipDirection.BOTH, archived, RelationshipType.hierarchyType).list
+
+        expect:
+        md2 != archived
+        md2.id != archived.id
+        originalVersion != newVersion
+        originalVersion == newVersion - 1
+        archivedVersion == originalVersion
+
+        md2.supersedes.contains(archived)
+
+        md2.parentOf.contains(md3)
+        !md2.childOf.contains(md1)
+        md2.parentOf.contains(md3)
+        md1.parentOf.contains(archived)
+        archived.parentOf.contains(md3)
+        archivedrel.size() == 2
+        !archivedrel.get(0).archived
+        !archivedrel.get(1).archived
+
+        cleanup:
+        md1.delete()
+        md2.delete()
+        md3.delete()
+
+
+    }
+
+    def "finalize tree"(){
+
+        setup:
+        Model md1      = new Model(name:"test1").save()
+        Model md2      = new Model(name:"test2").save()
+        Model md3      = new Model(name:"test3").save()
+        Model md4      = new Model(name:"test3").save()
+        DataElement de1 = new DataElement(name: "test1").save()
+        DataElement de2 = new DataElement(name: "test1").save()
+        DataElement de3 = new DataElement(name: "test1").save()
+
+        md1.addToContains(de1)
+        md3.addToContains(de2)
+        md4.addToContains(de3)
+        md1.addToParentOf(md2)
+        md1.addToParentOf(md3)
+        md2.addToParentOf(md4)
+
+        expect:
+        md1.status == PublishedElementStatus.DRAFT
+        md2.status == PublishedElementStatus.DRAFT
+        md3.status == PublishedElementStatus.DRAFT
+        md4.status == PublishedElementStatus.DRAFT
+        de1.status == PublishedElementStatus.DRAFT
+        de2.status == PublishedElementStatus.DRAFT
+        de3.status == PublishedElementStatus.DRAFT
+
+        when:
+
+        publishedElementService.finalizeTree(md1)
+
+        then:
+        md1.status == PublishedElementStatus.FINALIZED
+        md2.status == PublishedElementStatus.FINALIZED
+        md3.status == PublishedElementStatus.FINALIZED
+        md4.status == PublishedElementStatus.FINALIZED
+        de1.status == PublishedElementStatus.FINALIZED
+        de2.status == PublishedElementStatus.FINALIZED
+        de3.status == PublishedElementStatus.FINALIZED
+
+        cleanup:
+        de1.delete()
+        de2.delete()
+        de3.delete()
+        md4.delete()
+        md3.delete()
+        md2.delete()
+        md1.delete()
+
+    }
+
+    def "finalize tree infinite loop"(){
+
+        setup:
+        Model md1      = new Model(name:"test1").save()
+        Model md2      = new Model(name:"test2").save()
+        Model md3      = new Model(name:"test3").save()
+
+        md1.addToParentOf(md2)
+        md2.addToParentOf(md3)
+        md3.addToParentOf(md1)
+
+        expect:
+        md1.status == PublishedElementStatus.DRAFT
+        md2.status == PublishedElementStatus.DRAFT
+        md3.status == PublishedElementStatus.DRAFT
+
+        when:
+        publishedElementService.finalizeTree(md1)
+
+        then:
+        md1.status == PublishedElementStatus.FINALIZED
+        md2.status == PublishedElementStatus.FINALIZED
+        md3.status == PublishedElementStatus.FINALIZED
+
+        cleanup:
+        md1.delete()
+        md2.delete()
+        md3.delete()
+
+
     }
 
 }

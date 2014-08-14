@@ -1,20 +1,21 @@
-package org.modelcatalogue.core
+package org.modelcatalogue.core.dataarchitect
 
+import org.modelcatalogue.core.AbstractIntegrationSpec
+import org.modelcatalogue.core.DataElement
+import org.modelcatalogue.core.Model
+import org.modelcatalogue.core.ValueDomain
 import org.modelcatalogue.core.util.ListWithTotal
 import spock.lang.Shared
-import spock.lang.Stepwise
-
 /**
-* Created by adammilward on 05/02/2014.
-*/
-@Stepwise
-class DataArchitectSpec extends AbstractIntegrationSpec {
+ * Created by adammilward on 05/02/2014.
+ */
+
+class DataArchitectServiceSpec extends AbstractIntegrationSpec {
     @Shared
     def dataArchitectService, relationshipService, de1, de2, de3, de4, de5, vd, md
 
 
     def setupSpec(){
-        //domainModellerService.modelDomains()
         loadFixtures()
         de1 = DataElement.findByName("DE_author")
         de2 = DataElement.findByName("DE_author1")
@@ -22,10 +23,12 @@ class DataArchitectSpec extends AbstractIntegrationSpec {
         de4 = DataElement.findByName("auth4")
         de5 = DataElement.findByName("auth5")
         vd = ValueDomain.findByName("value domain Celsius")
-        md = Model.findByName("book")
-        de1.addToContainedIn(md)
+        md = new Model(name:"tsdfafsd").save()
+        de1.refresh()
+        de2.refresh()
+        md.refresh()
+        md.addToContains(de1)
         de2.addToInstantiatedBy(vd)
-        relationshipService.link(de3, de2, RelationshipType.findByName("supersession"))
         de1.ext.put("localIdentifier", "test")
         de4.ext.put("test2", "test2")
         de4.ext.put("metadata", "test2")
@@ -36,12 +39,10 @@ class DataArchitectSpec extends AbstractIntegrationSpec {
     }
 
     def cleanupSpec(){
-        de1 = DataElement.findByName("DE_author")
-        de2 = DataElement.findByName("DE_author1")
         md.refresh()
-        vd.refresh()
-        de1.removeFromContainedIn(md)
-        de2.removeFromInstantiatedBy(vd)
+        de1.refresh()
+        md.removeFromContains(de1)
+        md.delete(flush:true)
     }
 
     def "find relationships and action them"() {
@@ -70,9 +71,11 @@ class DataArchitectSpec extends AbstractIntegrationSpec {
         Map params = [:]
         params.put("max", 12)
         params.put("key", "metadata")
+        de1.refresh()
+        de5.refresh()
         ListWithTotal dataElements = dataArchitectService.metadataKeyCheck(params)
-
         then:
+
         !dataElements.items.contains(de2)
         !dataElements.items.contains(de4)
         dataElements.items.contains(de1)

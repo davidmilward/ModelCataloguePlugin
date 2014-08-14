@@ -328,10 +328,10 @@ class Importer {
         }
     }
 
-    def  importValueDomain(String name, String description, DataType dataType, String regexDef, ConceptualDomain cd) {
+    def  importValueDomain(String name, String description, DataType dataType, String regexDef, ConceptualDomain cd, Boolean multiple=Boolean.FALSE) {
         ValueDomain vd = ValueDomain.findByDataTypeAndName(dataType, name)
         if (!vd) {
-            vd = new ValueDomain(name: name, description: description, dataType: dataType).save()
+            vd = new ValueDomain(name: name, description: description, dataType: dataType, multiple: multiple).save()
             if (regexDef!=""){
                 vd.setRegexDef(regexDef)
                 vd.save()

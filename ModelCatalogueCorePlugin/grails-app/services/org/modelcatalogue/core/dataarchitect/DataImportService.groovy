@@ -206,12 +206,21 @@ class DataImportService {
                 dataType = (row.dataType) ? importDataType(row.dataElementName, row.dataType) : null
                 model = importModels(importer, row.parentModelCode, row.parentModelName, row.containingModelCode, row.containingModelName, conceptualDomain)
                 measurementUnit = importMeasurementUnit([name: row.measurementUnitName, symbol: row.measurementSymbol])
+
                 if (dataType || measurementUnit) {
                     //need to import value domain stuff as well
                     importDataElement(importer, [name: row.dataElementName, description: row.dataElementDescription, modelCatalogueId: row.dataElementCode], row.metadata, model, [name: row.dataElementName.replaceAll("\\s", "_"), description: row.dataType.toString().take(2000), dataType: dataType, measurementUnit: measurementUnit], conceptualDomain)
                 } else {
                     //doesn't have a value domain so easy
-                    importDataElement(importer, [name: row.dataElementName, description: row.dataElementDescription, modelCatalogueId: row.dataElementCode], row.metadata, model, conceptualDomain)
+
+                    def vd = ValueDomain.findByName(row.dataType)
+                    if(!vd) vd = ValueDomain.findByNameIlike(row.dataType)
+
+                    if(!vd) {
+                        importDataElement(importer, [name: row.dataElementName, description: row.dataElementDescription, modelCatalogueId: row.dataElementCode], row.metadata, model, conceptualDomain)
+                    }else{
+                        importDataElement(importer, [name: row.dataElementName, description: row.dataElementDescription, modelCatalogueId: row.dataElementCode], row.metadata, model, vd, conceptualDomain)
+                    }
                 }
             }
             if(!bulkIngest) importer.removeFromImportQueue(row)
@@ -445,6 +454,56 @@ class DataImportService {
         return dataElement
     }
 
+
+    protected DataElement updateDataElement(DataImport importer, Map params, DataElement dataElement, ValueDomain valueDomain, ConceptualDomain cd, Map metadata, Model model, ConceptualDomain conceptualDomain) {
+        Boolean dataElementChanged = checkDataElementForChanges(params, metadata, dataElement)
+        ValueDomain vd = dataElement.instantiatedBy.find { it.includedIn.contains(cd) }
+        Boolean valueDomainChanged = false
+
+        if(valueDomain.id!=vd.id){
+            valueDomainChanged = true
+        }
+
+        if (dataElementChanged || valueDomainChanged) {
+
+            if(model.status!=PublishedElementStatus.UPDATED && model.status!=PublishedElementStatus.DRAFT){
+                model.status = PublishedElementStatus.UPDATED
+                model.save()
+            }
+
+            addModelToImport(importer, model)
+
+            publishedElementService.archiveAndIncreaseVersion(dataElement)
+            dataElement.refresh()
+
+            if(dataElementChanged) {
+                dataElement.name = params.name
+                dataElement.description = params.description
+                dataElement.status = PublishedElementStatus.UPDATED
+                dataElement.save()
+                dataElement = updateMetadata(metadata, dataElement)
+            }
+
+            if (valueDomainChanged) {
+                if(dataElement.status != PublishedElementStatus.UPDATED) {
+                    dataElement.status = PublishedElementStatus.UPDATED
+                    dataElement.save()
+                }
+                //remove the old one (will still be in the archived one)
+                dataElement.removeFromInstantiatedBy(vd)
+                //see if there is one that matches or create a new one
+                dataElement.addToInstantiates(valueDomain)
+
+            }
+
+            addUpdatedDataElements(importer, dataElement, model, conceptualDomain)
+
+        }
+
+        return dataElement
+    }
+
+
     protected ValueDomain importValueDomain(Map vdParams, DataElement dataElement, ConceptualDomain cd) {
         ValueDomain vd = ValueDomain.findByDataTypeAndUnitOfMeasure(vdParams.dataType, vdParams.unitOfMeasure)
         if (!vd) { vd = new ValueDomain(vdParams).save() }
@@ -485,6 +544,40 @@ class DataImportService {
         }
 
         importValueDomain(vdParams, de, cd)
+
+        return de
+    }
+
+
+    protected DataElement importDataElement(DataImport importer, Map params, Map metadata, Model model, ValueDomain valueDomain, ConceptualDomain cd) {
+
+        //find out if data element exists using unique code
+        DataElement de = DataElement.findByModelCatalogueId(params.modelCatalogueId)
+        if (de) {
+            de = updateDataElement(importer, params, de, valueDomain, cd, metadata, model, cd)
+        }
+
+        //find if data element exists using name and containing model
+        if (!de) {
+            def nameDE = DataElement.findByName(params.name)
+            if (nameDE && nameDE.containedIn.contains(model)) {
+                de = nameDE
+                if (de) { de = updateDataElement(importer, params, de, vdParams, cd, metadata, model, cd)  }
+            }
+        }
+
+        if (!de) {
+            params.put('status', PublishedElementStatus.FINALIZED)
+            de = new DataElement(params)
+            de.modelCatalogueId = params.modelCatalogueId
+            de.save()
+            de = updateMetadata(metadata, de)
+//            Relationship containedIn = de.addToContainedIn(model)
+//            containedIn.ext.put("Context" , cd.name)
+            addModelToImport(importer, model)
+            addUpdatedDataElements(importer, de, model, cd)
+            de.addToInstantiatedBy(valueDomain)
+        }
 
         return de
     }

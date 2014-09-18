@@ -19,7 +19,7 @@ class ImportService {
         initCatalogueService.initDefaultRelationshipTypes()
         initCatalogueService.initDefaultDataTypes()
         initCatalogueService.initDefaultMeasurementUnits()
-        getNhicFiles().each { filename -> singleImport(filename) }
+//        getNhicFiles().each { filename -> singleImport(filename) }
     }
 //
 //    private grantUserPermissions(objectOrList) {

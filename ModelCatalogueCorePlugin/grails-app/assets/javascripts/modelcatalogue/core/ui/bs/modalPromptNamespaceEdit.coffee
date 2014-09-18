@@ -1,4 +1,4 @@
-angular.module('mc.core.ui.bs.modalPromptBasicEdit', ['mc.util.messages', 'mc.core.ui.bs.saveAndCreateAnotherCtrlMixin']).config ['messagesProvider', (messagesProvider)->
+angular.module('mc.core.ui.bs.modalPromptNamespaceEdit', ['mc.util.messages', 'mc.core.ui.bs.saveAndCreateAnotherCtrlMixin']).config ['messagesProvider', (messagesProvider)->
   factory = [ '$modal', '$q', 'messages', ($modal, $q, messages) ->
     (title, body, args) ->
       if not args?.element? and not args?.create?
@@ -23,6 +23,10 @@ angular.module('mc.core.ui.bs.modalPromptBasicEdit', ['mc.util.messages', 'mc.co
                 <textarea rows="10" ng-model="copy.description" placeholder="Description" class="form-control" id="description"></textarea>
               </div>
             </form>
+            <div class="form-group">
+                <label for="description" class="">Namespace</label>
+                <input type="text" class="form-control" id="name" placeholder="Namespace" ng-model="copy.namespace">
+              </div>
         </div>
         <div class="modal-footer">
           <contextual-actions></contextual-actions>
@@ -46,6 +50,6 @@ angular.module('mc.core.ui.bs.modalPromptBasicEdit', ['mc.util.messages', 'mc.co
       dialog.result
   ]
 
-  messagesProvider.setPromptFactory 'edit-batch', factory
-  messagesProvider.setPromptFactory 'edit-csvTransformation', factory
+  messagesProvider.setPromptFactory 'edit-conceptualDomain', factory
+  messagesProvider.setPromptFactory 'edit-classification', factory
 ]

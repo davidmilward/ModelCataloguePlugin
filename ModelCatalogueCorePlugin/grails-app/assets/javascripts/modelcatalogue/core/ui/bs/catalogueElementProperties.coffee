@@ -48,8 +48,8 @@ angular.module('mc.core.ui.bs.catalogueElementProperties', []).config ['catalogu
 
   # global settings
   catalogueElementPropertiesProvider.configureProperty 'ext',             label: 'Metadata'
-  catalogueElementPropertiesProvider.configureProperty 'parentOf',        label: 'Children',            columns: nameAndIdent()
-  catalogueElementPropertiesProvider.configureProperty 'childOf',         label: 'Parent',              columns: nameAndIdent()
+  catalogueElementPropertiesProvider.configureProperty 'parentOf',        label: 'Children',            columns: nameAndIdAndMetadata()
+  catalogueElementPropertiesProvider.configureProperty 'childOf',         label: 'Parent',              columns: nameAndIdAndMetadata()
   catalogueElementPropertiesProvider.configureProperty 'isContextFor',    label: 'Models',              columns: nameAndIdent()
   catalogueElementPropertiesProvider.configureProperty 'includes',        label: 'Value Domains',          columns: nameAndIdent()
   catalogueElementPropertiesProvider.configureProperty 'instantiatedBy',  label: 'Value Domains',           columns: nameAndIdAndMetadata()

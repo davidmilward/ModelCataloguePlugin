@@ -44,8 +44,8 @@ class XSDImportService {
     def getClassifications(XsdSchema schema, String classificationName, Collection<QName> namespaces, String description){
         Collection<Classification> classifications = []
 
-        //match the conceptual domain
-        classifications.add(matchOrCreateClassification(classificationName, schema.targetNamespace, description))
+        //match the classification
+        classifications.addAll(matchOrCreateClassification(classificationName, schema.targetNamespace, description))
         for (namespace in namespaces) {
             def classification = Classification.findByNamespace(namespace.namespaceURI)
             if (!classification){
@@ -57,23 +57,55 @@ class XSDImportService {
         return classifications
     }
 
+
+
     def matchOrCreateClassification(String classificationName, String namespaceURI, String description){
-        Classification classification = Classification.findByNamespace(namespaceURI)
-        if(!classification) classification = new Classification(name: classificationName, namespace: namespaceURI, description: description).save()
-        return classification
+        ArrayList<Classification> classifications= []
+        Classification classification = Classification.findByNameAndNamespace(classificationName, namespaceURI)
+        if(classification) classifications.add(classification)
+        if(!classifications) {
+            classification = Classification.findByName(classificationName)
+            if(classification){
+                classifications.add(classification)
+                classification = null
+            }else{
+                classifications.add(new Classification(name: classificationName, namespace: namespaceURI + "(" + classificationName + ")", description: description).save())
+            }
+            classification = Classification.findByNamespace(namespaceURI)
+            if(classification){
+                classifications.add(classification)
+            }
+        }
+
+        return classifications
     }
 
     def matchOrCreateConceptualDomain(String conceptualDomainName, String namespaceURI, String description){
-        ConceptualDomain conceptualDomain = ConceptualDomain.findByNamespace(namespaceURI)
-        if(!conceptualDomain) conceptualDomain = new ConceptualDomain(name: conceptualDomainName, namespace: namespaceURI, description: description).save()
-        return conceptualDomain
+        ArrayList<ConceptualDomain> conceptualDomains= []
+        ConceptualDomain conceptualDomain = ConceptualDomain.findByNameAndNamespace(conceptualDomainName, namespaceURI)
+        if(conceptualDomain) conceptualDomains.add(conceptualDomain)
+        if(!conceptualDomains) {
+            conceptualDomain = ConceptualDomain.findByName(conceptualDomainName)
+            if(conceptualDomain){
+                conceptualDomains.add(conceptualDomain)
+                conceptualDomain = null
+            }else{
+                conceptualDomains.add(new ConceptualDomain(name: conceptualDomainName, namespace: namespaceURI + "(" + conceptualDomainName + ")", description: description).save())
+            }
+            conceptualDomain = ConceptualDomain.findByNamespace(namespaceURI)
+            if(conceptualDomain){
+                conceptualDomains.add(conceptualDomain)
+            }
+        }
+
+        return conceptualDomains
     }
 
     def getConceptualDomains(XsdSchema schema, String conceptualDomainName, Collection<QName> namespaces, String description){
         Collection<ConceptualDomain> conceptualDomains = []
 
         //match the conceptual domain
-        conceptualDomains.add(matchOrCreateConceptualDomain(conceptualDomainName, schema.targetNamespace, description))
+        conceptualDomains.addAll(matchOrCreateConceptualDomain(conceptualDomainName, schema.targetNamespace, description))
         for (namespace in namespaces) {
             def conceptualDomain = ConceptualDomain.findByNamespace(namespace.namespaceURI)
             if (!conceptualDomain){
@@ -144,6 +176,7 @@ class XSDImportService {
         }
 
         modelsCreated.each{ Model model->
+            model = model.refresh()
             if(!model.childOf) {
                 model.addToChildOf(containerModel)
                 model.addToClassifications(typeClassification)

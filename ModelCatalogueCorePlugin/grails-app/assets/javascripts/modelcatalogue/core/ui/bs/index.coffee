@@ -30,6 +30,7 @@
 #= require simpleObjectEditor
 #= require modalPromptAssetEdit
 #= require modalPromptBasicEdit
+#= require modalPromptNamespaceEdit
 #= require modalPromptCsvHeaders
 #= require modalPromptCsvTransform
 #= require modalPromptLogin
@@ -85,6 +86,7 @@ angular.module('mc.core.ui.bs', [
   'mc.core.ui.bs.simpleObjectEditor'
   'mc.core.ui.bs.modalPromptAssetEdit'
   'mc.core.ui.bs.modalPromptLogin'
+  'mc.core.ui.bs.modalPromptNamespaceEdit'
   'mc.core.ui.bs.modalPromptBasicEdit'
   'mc.core.ui.bs.modalPromptMeasurementUnitEdit'
   'mc.core.ui.bs.modalPromptValueDomainEdit'

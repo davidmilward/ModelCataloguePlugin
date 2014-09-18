@@ -29,68 +29,68 @@ class BootStrap {
 
     def init = { servletContext ->
 
-        initCatalogueService.initCatalogue()
-
-        xlsxListRenderer.registerRowWriter('reversed') {
-            title "Reversed DEMO Export"
-            append metadata
-            headers 'Description', 'Name', 'ID'
-            when { ListWrapper container, RenderContext context ->
-                context.actionName in ['index', 'search'] && container.itemType && CatalogueElement.isAssignableFrom(container.itemType)
-            } then { CatalogueElement element ->
-                [[element.description, element.name, element.id]]
-            }
-        }
-
-        def roleUser = Role.findByAuthority('ROLE_USER') ?: new Role(authority: 'ROLE_USER').save(failOnError: true)
-        def roleAdmin = Role.findByAuthority('ROLE_ADMIN') ?: new Role(authority: 'ROLE_ADMIN').save(failOnError: true)
-        def metadataCurator = Role.findByAuthority('ROLE_METADATA_CURATOR') ?: new Role(authority: 'ROLE_METADATA_CURATOR').save(failOnError: true)
-
-        def admin   = User.findByUsername('admin') ?: new User(username: 'admin', enabled: true, password: 'admin').save(failOnError: true)
-        def viewer  = User.findByUsername('viewer') ?: new User(username: 'viewer', enabled: true, password: 'viewer').save(failOnError: true)
-        def curator = User.findByUsername('curator') ?: new User(username: 'curator', enabled: true, password: 'curator').save(failOnError: true)
-
-
-        if (!admin.authorities.contains(roleAdmin)) {
-            UserRole.create admin, roleUser
-            UserRole.create admin, metadataCurator
-            UserRole.create admin, roleAdmin, true
-        }
-
-        if (!curator.authorities.contains(metadataCurator)) {
-            UserRole.create curator, roleUser
-            UserRole.create curator, metadataCurator
-        }
-
-        if (!viewer.authorities.contains(viewer)) {
-            UserRole.create viewer, roleUser
-        }
-
-        //permit all for assets and initial pages
-        for (String url in [
-                '/',
-                '/**/favicon.ico',
-                '/fonts/**',
-                '/assets/**',
-                '/plugins/**/js/**',
-                '/js/vendor/**',
-                '/**/*.less',
-                '/**/js/**',
-                '/**/css/**',
-                '/**/images/**',
-                '/**/img/**',
-                '/login', '/login.*', '/login/*',
-                '/logout', '/logout.*', '/logout/*',
-                '/register/*', '/errors', '/errors/*'
-        ]) {
-            new Requestmap(url: url, configAttribute: 'permitAll').save(failOnError: true)
-        }
-
-        new Requestmap(url: '/api/modelCatalogue/core/*/**', configAttribute: 'IS_AUTHENTICATED_ANONYMOUSLY',   httpMethod: org.springframework.http.HttpMethod.GET).save(failOnError: true)
-        new Requestmap(url: '/asset/download/*',             configAttribute: 'IS_AUTHENTICATED_ANONYMOUSLY',   httpMethod: org.springframework.http.HttpMethod.GET).save(failOnError: true)
-        new Requestmap(url: '/api/modelCatalogue/core/*/**', configAttribute: 'ROLE_METADATA_CURATOR',          httpMethod: org.springframework.http.HttpMethod.POST).save(failOnError: true)
-        new Requestmap(url: '/api/modelCatalogue/core/*/**', configAttribute: 'ROLE_METADATA_CURATOR',          httpMethod: org.springframework.http.HttpMethod.PUT).save(failOnError: true)
-        new Requestmap(url: '/api/modelCatalogue/core/*/**', configAttribute: 'ROLE_METADATA_CURATOR',          httpMethod: org.springframework.http.HttpMethod.DELETE).save(failOnError: true)
+//        initCatalogueService.initCatalogue()
+//
+////        xlsxListRenderer.registerRowWriter('reversed') {
+////            title "Reversed DEMO Export"
+////            append metadata
+////            headers 'Description', 'Name', 'ID'
+////            when { ListWrapper container, RenderContext context ->
+////                context.actionName in ['index', 'search'] && container.itemType && CatalogueElement.isAssignableFrom(container.itemType)
+////            } then { CatalogueElement element ->
+////                [[element.description, element.name, element.id]]
+////            }
+////        }
+//
+//        def roleUser = Role.findByAuthority('ROLE_USER') ?: new Role(authority: 'ROLE_USER').save(failOnError: true)
+//        def roleAdmin = Role.findByAuthority('ROLE_ADMIN') ?: new Role(authority: 'ROLE_ADMIN').save(failOnError: true)
+//        def metadataCurator = Role.findByAuthority('ROLE_METADATA_CURATOR') ?: new Role(authority: 'ROLE_METADATA_CURATOR').save(failOnError: true)
+//
+//        def admin   = User.findByUsername('admin') ?: new User(username: 'admin', enabled: true, password: 'admin').save(failOnError: true)
+//        def viewer  = User.findByUsername('viewer') ?: new User(username: 'viewer', enabled: true, password: 'viewer').save(failOnError: true)
+//        def curator = User.findByUsername('curator') ?: new User(username: 'curator', enabled: true, password: 'curator').save(failOnError: true)
+//
+//
+//        if (!admin.authorities.contains(roleAdmin)) {
+//            UserRole.create admin, roleUser
+//            UserRole.create admin, metadataCurator
+//            UserRole.create admin, roleAdmin, true
+//        }
+//
+//        if (!curator.authorities.contains(metadataCurator)) {
+//            UserRole.create curator, roleUser
+//            UserRole.create curator, metadataCurator
+//        }
+//
+//        if (!viewer.authorities.contains(viewer)) {
+//            UserRole.create viewer, roleUser
+//        }
+//
+//        //permit all for assets and initial pages
+//        for (String url in [
+//                '/',
+//                '/**/favicon.ico',
+//                '/fonts/**',
+//                '/assets/**',
+//                '/plugins/**/js/**',
+//                '/js/vendor/**',
+//                '/**/*.less',
+//                '/**/js/**',
+//                '/**/css/**',
+//                '/**/images/**',
+//                '/**/img/**',
+//                '/login', '/login.*', '/login/*',
+//                '/logout', '/logout.*', '/logout/*',
+//                '/register/*', '/errors', '/errors/*'
+//        ]) {
+//            new Requestmap(url: url, configAttribute: 'permitAll').save(failOnError: true)
+//        }
+//
+//        new Requestmap(url: '/api/modelCatalogue/core/*/**', configAttribute: 'IS_AUTHENTICATED_ANONYMOUSLY',   httpMethod: org.springframework.http.HttpMethod.GET).save(failOnError: true)
+//        new Requestmap(url: '/asset/download/*',             configAttribute: 'IS_AUTHENTICATED_ANONYMOUSLY',   httpMethod: org.springframework.http.HttpMethod.GET).save(failOnError: true)
+//        new Requestmap(url: '/api/modelCatalogue/core/*/**', configAttribute: 'ROLE_METADATA_CURATOR',          httpMethod: org.springframework.http.HttpMethod.POST).save(failOnError: true)
+//        new Requestmap(url: '/api/modelCatalogue/core/*/**', configAttribute: 'ROLE_METADATA_CURATOR',          httpMethod: org.springframework.http.HttpMethod.PUT).save(failOnError: true)
+//        new Requestmap(url: '/api/modelCatalogue/core/*/**', configAttribute: 'ROLE_METADATA_CURATOR',          httpMethod: org.springframework.http.HttpMethod.DELETE).save(failOnError: true)
 
 //        new Requestmap(url: '/api/modelCatalogue/core/model/**', configAttribute: 'IS_AUTHENTICATED_ANONYMOUSLY').save(failOnError: true)
 //        new Requestmap(url: '/api/modelCatalogue/core/dataElement/**', configAttribute: 'ROLE_METADATA_CURATOR').save(failOnError: true)
@@ -103,10 +103,12 @@ class BootStrap {
         environments {
             development {
                 try {
-                    println 'Running post init job'
-                    println 'Importing data'
-                    importService.importData()
-                    def classification =  new Classification(name: "nhic", namespace: "www.nhic.co.uk").save(failOnError: true)
+//                    println 'Running post init job'
+//                    println 'Importing data'
+//                    importService.importData()
+
+
+//                    def classification =  new Classification(name: "nhic", namespace: "www.nhic.co.uk").save(failOnError: true)
 //                    def de = new DataElement(name: "testera", description: "test data architect", classifications: [classification]).save(failOnError: true)
 //                    de.ext.metadata = "test metadata"
 //
@@ -131,44 +133,44 @@ class BootStrap {
 //                    }
 //
 //
-                    println 'Finalizing all published elements'
-                    PublishedElement.findAllByStatusNotEqual(PublishedElementStatus.FINALIZED).each {
-                        if (it instanceof Model) {
-                            publishedElementService.finalizeTree(it)
-                        } else {
-                            it.status = PublishedElementStatus.FINALIZED
-                            it.save failOnError: true
-                        }
-                    }
-
-                    println "Creating some actions"
-
-                    Batch batch = new Batch(name: 'Test Batch').save(failOnError: true)
-
-                    15.times {
-                        Action action
-                        if (it == 7) {
-                            action = actionService.create(batch, CreateCatalogueElement, two: Action.get(2), five: Action.get(5), six: Action.get(6), name: "Model #${it}", type: Model.name)
-                        } else if (it == 4) {
-                            action = actionService.create(batch, CreateCatalogueElement, two: Action.get(2), name: "Model #${it}", type: Model.name)
-                        } else {
-                            action = actionService.create(batch, CreateCatalogueElement, name: "Model #${it}", type: Model.name)
-                        }
-                        if (it % 3 == 0) {
-                            actionService.dismiss(action)
-                        }
-                    }
-
-                    def parent = new Model(name:"parent1", status: PublishedElementStatus.FINALIZED).save(flush:true)
-                    parent.addToChildOf(parent)
-
-                    assert !actionService.create(batch, TestAction, fail: true).hasErrors()
-                    assert !actionService.create(batch, TestAction, fail: true, timeout: 10000).hasErrors()
-                    assert !actionService.create(batch, TestAction, timeout: 5000, result: "the result").hasErrors()
-                    assert !actionService.create(batch, TestAction, test: actionService.create(batch, TestAction, fail: true, timeout: 3000)).hasErrors()
-
-
-                    setupSimpleCsvTransformation()
+//                    println 'Finalizing all published elements'
+//                    PublishedElement.findAllByStatusNotEqual(PublishedElementStatus.FINALIZED).each {
+//                        if (it instanceof Model) {
+//                            publishedElementService.finalizeTree(it)
+//                        } else {
+//                            it.status = PublishedElementStatus.FINALIZED
+//                            it.save failOnError: true
+//                        }
+//                    }
+//
+//                    println "Creating some actions"
+//
+//                    Batch batch = new Batch(name: 'Test Batch').save(failOnError: true)
+//
+//                    15.times {
+//                        Action action
+//                        if (it == 7) {
+//                            action = actionService.create(batch, CreateCatalogueElement, two: Action.get(2), five: Action.get(5), six: Action.get(6), name: "Model #${it}", type: Model.name)
+//                        } else if (it == 4) {
+//                            action = actionService.create(batch, CreateCatalogueElement, two: Action.get(2), name: "Model #${it}", type: Model.name)
+//                        } else {
+//                            action = actionService.create(batch, CreateCatalogueElement, name: "Model #${it}", type: Model.name)
+//                        }
+//                        if (it % 3 == 0) {
+//                            actionService.dismiss(action)
+//                        }
+//                    }
+////
+////                    def parent = new Model(name:"parent1", status: PublishedElementStatus.FINALIZED).save(flush:true)
+////                    parent.addToChildOf(parent)
+////
+//                    assert !actionService.create(batch, TestAction, fail: true).hasErrors()
+//                    assert !actionService.create(batch, TestAction, fail: true, timeout: 10000).hasErrors()
+//                    assert !actionService.create(batch, TestAction, timeout: 5000, result: "the result").hasErrors()
+//                    assert !actionService.create(batch, TestAction, test: actionService.create(batch, TestAction, fail: true, timeout: 3000)).hasErrors()
+//
+//
+//                    setupSimpleCsvTransformation()
 
                     println "Init finished in ${new Date()}"
                 } catch (e) {
@@ -199,12 +201,15 @@ class BootStrap {
 
         DataElement patientTemperature   = new DataElement(name: "patient temperature",    valueDomain: temperature).save(failOnError: true)
         DataElement patientTemperatureUS = new DataElement(name: "patient temperature US", valueDomain: temperatureUS).save(failOnError: true)
+        ValueDomain string = ValueDomain.findByName("xs:string")
+        DataElement patientGivenName = new DataElement(name: "patient given name", valueDomain: string).save(failOnError: true)
+        DataElement patientFamilyName = new DataElement(name: "patient family name", valueDomain: string).save(failOnError: true)
 
 
         CsvTransformation transformation = new CsvTransformation(name: "UK to US records").save(failOnError: true)
 
-        new ColumnTransformationDefinition(transformation: transformation, source: DataElement.findByName("PERSON GIVEN NAME"), header: "FIRST NAME").save(failOnError: true)
-        new ColumnTransformationDefinition(transformation: transformation, source: DataElement.findByName("PERSON FAMILY NAME"), header: "SURNAME").save(failOnError: true)
+        new ColumnTransformationDefinition(transformation: transformation, source: patientGivenName, header: "FIRST NAME").save(failOnError: true)
+        new ColumnTransformationDefinition(transformation: transformation, source: patientFamilyName, header: "SURNAME").save(failOnError: true)
         new ColumnTransformationDefinition(transformation: transformation, source: patientTemperature, destination: patientTemperatureUS, header: "PATIENT TEMPERATURE").save(failOnError: true)
     }
 

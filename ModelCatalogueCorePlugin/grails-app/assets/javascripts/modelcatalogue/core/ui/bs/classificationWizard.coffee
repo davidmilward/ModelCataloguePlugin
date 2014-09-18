@@ -43,6 +43,10 @@ angular.module('mc.core.ui.bs.classificationWizard', ['mc.util.messages', 'mc.ut
                   <label for="description" class="">Description</label>
                   <textarea rows="10" ng-model="classification.description" placeholder="Description (Optional)" class="form-control" id="description" ng-keydown="navigateOnKey($event, 9, 'elements')"></textarea>
                 </div>
+                <div class="form-group">
+                  <label for="description" class="">Namespace</label>
+                  <input type="text" class="form-control" id="name" placeholder="NameSpace (Optional)" ng-model="classification.namespace" focus-me="step=='classification'" required>
+                </div>
               </form>
           </div>
           <div ng-switch-when="elements" id="elements">

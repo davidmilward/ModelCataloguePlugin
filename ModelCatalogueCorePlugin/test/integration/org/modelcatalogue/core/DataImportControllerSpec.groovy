@@ -21,7 +21,7 @@ class DataImportControllerSpec extends AbstractIntegrationSpec implements Result
     @Shared
     def fileName, recorder, filenameXsd, filenameXsd2
     def setupSpec(){
-        fileName = "test/integration/resources/example.xls"
+        fileName = "test/integration/resources/template.xlsx"
         filenameXsd = "test/unit/resources/SACT/XMLDataTypes.xsd"//"test/unit/resources/SACT/XSD_Example.xsd"
         filenameXsd2 = "test/unit/resources/SACT/Breast_XMLSchema.xsd"//"test/unit/resources/SACT/XSD_Example.xsd"
         loadMarshallers()
@@ -33,50 +33,75 @@ class DataImportControllerSpec extends AbstractIntegrationSpec implements Result
         )
     }
 
-    //so we don't load a file
-    def "placeholder"(){
-
-    }
+//    //so we don't load a file
+//    def "placeholder"(){
+//
+//    }
 
 //uncomment locally
 
-//    def "Test the dataImportService in the ImporterController"()
-//    {
-//        def controller = new DataImportController()
-//        when: "The dataImportService is called"
-//        def numElements = DataElement.count()
-//        controller.response.format = 'json'
-//        controller.metaClass.request = new MockMultipartHttpServletRequest()
-//        controller.params.conceptualDomain = 'COSD'
-//        controller.params.name = 'testImport123'
-//        InputStream inputStream = new FileInputStream(fileName)
-//        controller.request.addFile(new MockMultipartFile('file', fileName,"application/octet-stream" , inputStream))
-//        controller.upload()
-//        JSONElement json = controller.response.json
-//        String list = "list1"
-//        recordResult list, json
-//
-//        then: "The an importer is created and there are items in the importQueue and actions"
-//        json
-//        json.pendingAction
-//        DataImport.list().size()>0
-//
-//        when:
-//        controller.resolveAll(json.id)
-//
-//        then:
-//        json
-//
-//        when:
-//        controller.ingestQueue(json.id)
-//
-//        then:
-//        json
-//
-//
-//
-//
-//    }
+    def "Test the dataImportService in the ImporterController"()
+    {
+        def controller = new DataImportController()
+        when: "The dataImportService is called"
+        def numElements = DataElement.count()
+        controller.response.format = 'json'
+        controller.metaClass.request = new MockMultipartHttpServletRequest()
+        controller.params.conceptualDomain = 'COSD'
+        controller.params.name = 'testImport123'
+        InputStream inputStream = new FileInputStream(fileName)
+        controller.request.addFile(new MockMultipartFile('file', fileName,"application/octet-stream" , inputStream))
+        controller.upload()
+        JSONElement json = controller.response.json
+        String list = "list1"
+        recordResult list, json
+
+        then: "The an importer is created and there are items in the importQueue and actions"
+        json
+        json.pendingAction
+        DataImport.list().size()>0
+
+        when:
+        controller = new DataImportController()
+        controller.params.id = json.id
+        controller.resolveAll()
+
+        then:
+        json
+
+        when:
+        controller = new DataImportController()
+        controller.params.id = json.id
+        controller.ingestQueue()
+
+        then:
+        json
+
+        when:
+        controller.ingestQueue(json.id)
+
+        then:
+        json
+        def rec = Model.findByName("RECIPIENT DEMOGRAPHICS")
+        def patient = Model.findByName("PATIENT RECORD")
+        def PseudonymisedId = DataElement.findByName("Pseudonymised patient identifier")
+        def Forename = DataElement.findByName("Forename")
+        def Middlename = DataElement.findByName("Middlename/s")
+        def Surname = DataElement.findByName("Surname")
+        def Maiden = DataElement.findByName("Maiden name")
+        def Alias = DataElement.findByName("Alias/es")
+        def classification = Classification.findByName("NHIC TRA")
+        def conceptualDomain = ConceptualDomain.findByName("NHIC")
+        rec
+        patient
+        PseudonymisedId
+        Forename
+        Middlename
+        Surname
+        Maiden
+        Alias
+
+    }
 
 //    def "Test the dataImportService in the ImporterController"() {
 //        def controller = new DataImportController()
